@@ -1,0 +1,25 @@
+﻿name: prepare-probe
+on:
+  push:
+    branches: [ci/prepare-probe]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc # v1.5.9
+        with:
+          release: "15.1"
+          arch: aarch64
+          usesh: true
+          cpu: 4
+          mem: 12288
+          copyback: false
+          prepare: |
+            pkg update -f || true
+            for p in bash git curl pkgconf cmake python3 libxkbcommon wayland libX11 libXcursor libXrandr libXi libxcb mesa-libs vulkan-loader gtk3 fontconfig freetype2 alsa-lib dejavu; do
+              pkg install -y "$p" || echo "PROBE-FAIL: $p"
+            done
+            curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal || echo "PROBE-FAIL: rustup"
+          run: echo done
